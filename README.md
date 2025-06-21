@@ -5,7 +5,7 @@
 ## 🔧 Components
 
 1. `simulation_and_detection/` – Builds user-behaviour graph and detects anomalies in log data.
-2. `predictive_ai/` – Uses GPT-4 to analyze threat intel and suggest future vulnerabilities.
+2. `predictive_ai/` – Uses Gemini to analyze threat intel and suggest future vulnerabilities.
 3. `dashboard/` – Streamlit dashboard showing live alerts and predictive risks.
 4. `backend/` – FastAPI server to connect detection + prediction to the dashboard or Slack.
 
