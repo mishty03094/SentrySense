@@ -13,7 +13,8 @@
 
 ```bash
 pip install -r requirements.txt
- Running Each Part
+
+Running Each Part
 
 cd simulation_and_detection
 python anomaly_detection.py
