@@ -6,7 +6,35 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import os
 from config import ANOMALY_DATA_PATH, THREAT_PREDICTION_PATH
-from visuals.plot_timeline import create_timeline_chart
+
+try:
+    from visuals.plot_timeline import create_timeline_chart
+except ImportError:
+    def create_timeline_chart(anomalies):
+        # Fallback timeline chart
+        if not anomalies:
+            return go.Figure()
+        
+        df = pd.DataFrame(anomalies)
+        df['datetime'] = pd.to_datetime(df['timestamp'])
+        
+        fig = px.scatter(
+            df, x='datetime', y='type', 
+            color='severity',
+            title='Anomaly Timeline',
+            color_discrete_map={
+                'Critical': '#FF4B4B',
+                'High': '#FF8C00',
+                'Medium': '#FFD700',
+                'Low': '#32CD32'
+            }
+        )
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font_color='white'
+        )
+        return fig
 
 # Page configuration
 st.set_page_config(
@@ -18,8 +46,60 @@ st.set_page_config(
 
 # Load custom CSS
 def load_css():
-    with open("dashboard/static/style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    css_path = os.path.join(os.path.dirname(__file__), "static", "style.css")
+    try:
+        if os.path.exists(css_path):
+            with open(css_path) as f:
+                st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        else:
+            # Fallback: inline basic styles if CSS file not found
+            st.markdown("""
+            <style>
+            .stApp {
+                background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+                font-family: 'Inter', sans-serif;
+            }
+            .metric-card {
+                background: linear-gradient(145deg, #1e293b, #334155);
+                border-radius: 12px;
+                padding: 1.5rem;
+                text-align: center;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+                border: 1px solid #475569;
+                margin-bottom: 1rem;
+            }
+            .metric-title {
+                color: #94a3b8;
+                font-size: 0.9rem;
+                font-weight: 500;
+                text-transform: uppercase;
+                margin-bottom: 0.5rem;
+            }
+            .metric-value {
+                color: white;
+                font-size: 2.5rem;
+                font-weight: 700;
+            }
+            .anomaly-card {
+                background: linear-gradient(145deg, #1e293b, #334155);
+                border-radius: 12px;
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+                border: 1px solid #475569;
+            }
+            .header {
+                background: linear-gradient(90deg, #1e3a8a 0%, #3b82f6 100%);
+                padding: 2rem;
+                border-radius: 12px;
+                margin-bottom: 2rem;
+                text-align: center;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            }
+            </style>
+            """, unsafe_allow_html=True)
+    except Exception as e:
+        st.warning(f"Could not load custom CSS: {e}")
 
 # Load data functions
 @st.cache_data
