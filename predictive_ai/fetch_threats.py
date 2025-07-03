@@ -6,8 +6,8 @@ current_dir = os.path.dirname(__file__)  # Gets path to predictive_ai
 output_folder = os.path.join(current_dir, "threats")
 os.makedirs(output_folder, exist_ok=True)
 
-# 2. Define API URL (fetch recent CVEs)
-url = "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=50"
+# 2. Define API URL - Limit to recent 5 CVEs (no severity filter to include both HIGH & MEDIUM)
+url = "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=5"
 
 # 3. Add headers to avoid 404 (pretend to be a browser)
 headers = {
@@ -51,10 +51,14 @@ for item in data.get('vulnerabilities', []):
         severity = metric.get('baseSeverity', 'Unknown')
         score = metric.get('cvssData', {}).get('baseScore', 'Unknown')
 
-    # Filter for HIGH severity only
-    if severity == "HIGH":
+    # Extract published date
+    published_date = cve.get('published', 'Unknown')
+
+    # Filter for HIGH and MEDIUM severity only
+    if severity in ["HIGH", "MEDIUM"]:
         with open(file_path, 'w') as f:
             f.write(f"CVE ID: {cve_id}\n")
+            f.write(f"Published Date: {published_date}\n")
             f.write(f"Description: {description}\n")
             f.write(f"Severity: {severity} (Score: {score})\n")
 
@@ -65,7 +69,7 @@ for item in data.get('vulnerabilities', []):
                 for ref in references:
                     f.write(f" - {ref.get('url', '')}\n")
 
-        print(f"Saved {cve_id}.txt")
+        print(f"Saved {cve_id}.txt ({severity})")
         count += 1
 
-print(f"\nTotal NEW HIGH severity threats saved: {count}")
+print(f"\nTotal NEW HIGH/MEDIUM severity threats saved: {count}")
