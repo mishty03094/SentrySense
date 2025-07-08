@@ -49,5 +49,47 @@
             "Implement least-privilege access controls to mitigate impact even if a compromise occurs. Root-level access should only be granted to those requiring it."
         ],
         "file": "CVE-1999-1471.txt"
-    }
+    },
+    {
+  "threat_type": "Dummy RCE Exploit",
+  "predicted_time": "2025-07-08T20:00:00",
+  "description": "Simulated vulnerability to test background monitor.",
+  "risk_level": "High",
+  "affected_systems": ["dummy-server"],
+  "suggested_fixes": ["Patch immediately"],
+  "confidence_score": 0.95,
+  "confidence_reasoning": "Just testing",
+  "file": "CVE-2025-TEST"
+}, 
+  {
+  "threat_type": "SSH Remote Code Execution",
+  "predicted_time": "2025-07-08T18:25:00",
+  "description": "CVE-2025-9999 describes a critical vulnerability in OpenSSH that allows unauthenticated remote attackers to execute arbitrary commands as root by exploiting an integer overflow in the key exchange process.",
+  "risk_level": "High",
+  "affected_systems": ["auth-server-01", "bastion-host-02"],
+  "suggested_fixes": [
+    "Immediately upgrade OpenSSH to the latest patched version.",
+    "Restrict SSH access to only trusted IPs using firewall rules.",
+    "Disable root login over SSH in the sshd_config file.",
+    "Implement fail2ban to block brute force attempts."
+  ],
+  "confidence_score": 0.93,
+  "confidence_reasoning": "The CVE is rated Critical by NVD, and active exploits have been observed. The infrastructure includes exposed SSH services, increasing real-world risk.",
+  "file": "CVE-2025-9999.txt"
+}, 
+{
+  "threat_type": "Deprecated TLS Version in Use",
+  "predicted_time": "2025-07-08T17:00:00",
+  "description": "Some backend APIs are still accepting TLS 1.0/1.1 connections, which are considered deprecated and insecure. While not an immediate exploit, it may allow downgrade attacks or weaken encryption guarantees.",
+  "risk_level": "Medium",
+  "affected_systems": ["api-gateway-01"],
+  "suggested_fixes": [
+    "Update API server configurations to only accept TLS 1.2 and above.",
+    "Use SSL Labs to test server TLS configurations and remove legacy cipher suites.",
+    "Ensure all load balancers also enforce minimum TLS standards."
+  ],
+  "confidence_score": 0.74,
+  "confidence_reasoning": "TLS 1.0/1.1 are deprecated as per industry standards. Presence in production is avoidable and adds risk.",
+  "file": "TLS-deprecation-2025.txt"
+}
 ]

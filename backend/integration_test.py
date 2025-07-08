@@ -1,7 +1,7 @@
 import requests
 import json
 
-anomaly = json.load(open("backend/simulation_and_detection/detected_anomalies.json"))
+anomaly = json.load(open("simulation_and_detection/logs/sample_logs.json"))
 threat = json.load(open("backend/predictive_ai/predicted_threats.json"))
 
 # Post anomaly
