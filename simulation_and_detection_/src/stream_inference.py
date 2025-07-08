@@ -115,12 +115,6 @@ def main():
     row = stream_df_aligned.iloc[0]
     node_features = torch.tensor(row.values, dtype=torch.float)
 
-    # --- Check for unknowns in key fields ---
-    unknown_fields = []
-    for field in ['masked_user', 'source_ip', 'destination_ip']:
-        if int(row[field]) == -1:
-            unknown_fields.append(field)
-
     log_entry = {
         "stream_index": int(df_existing.shape[0]),
         "raw_features": row.to_dict()
@@ -135,12 +129,6 @@ def main():
             "reason": f"Local time in {city} is {local_hour}:00 — time is not good (12am-4am)"
         })
         print(f"Medium anomaly: Local time in {city} is {local_hour}:00 — time is not good (12am-4am). Skipping model inference.")
-    elif unknown_fields:
-        log_entry.update({
-            "anomaly": "low_level",
-            "reason": f"Unknown value(s) for: {', '.join(unknown_fields)}"
-        })
-        print(f"Low-level anomaly: Unknown {', '.join(unknown_fields)} detected. Skipping model inference.")
     else:
         assert data.x.shape[1] == node_features.shape[0] == 32, (
             f"Feature mismatch: graph has {data.x.shape[1]}, node has {node_features.shape[0]}"
@@ -154,34 +142,40 @@ def main():
             x_hat[-1], temp_graph.x[-1], reduction='sum'
         ).item()
 
-        # --- Explainability: Top 3 features by absolute error ---
-        original = temp_graph.x[-1].cpu().numpy()
-        reconstructed = x_hat[-1].cpu().numpy()
-        abs_errors = np.abs(original - reconstructed)
-        feature_names = list(row.index)
-        top_indices = abs_errors.argsort()[-3:][::-1]
-        explanation = []
-        for idx in top_indices:
-            explanation.append({
-                "feature": feature_names[idx],
-                "original": float(original[idx]),
-                "reconstructed": float(reconstructed[idx]),
-                "abs_error": float(abs_errors[idx])
-            })
-
-        threshold = 20931037.7676  # Example: adjust as needed for your data
+        threshold = 10000000  # Example: adjust as needed for your data
         is_anomaly = recon_error > threshold
 
         log_entry.update({
             "anomaly": is_anomaly,
-            "score": recon_error,
-            "why": explanation
+            "score": recon_error
         })
 
-        print(f"Event {df_existing.shape[0]}: score={recon_error:.4f} [{'ANOMALY' if is_anomaly else 'normal'}]")
-        print("Top contributing features to anomaly score:")
-        for feat in explanation:
-            print(f"  {feat['feature']}: abs_error={feat['abs_error']:.4f}")
+        if is_anomaly:
+            # --- Explainability: Top 2 features by absolute error (human-readable) ---
+            original = temp_graph.x[-1].cpu().numpy()
+            reconstructed = x_hat[-1].cpu().numpy()
+            abs_errors = np.abs(original - reconstructed)
+            feature_names = list(row.index)
+            top_indices = abs_errors.argsort()[-2:][::-1]
+
+            explanation = []
+            for idx in top_indices:
+                feat = feature_names[idx]
+                orig_val = original[idx]
+                recon_val = reconstructed[idx]
+                if abs(orig_val - recon_val) > 0:
+                    reason = f"The attribute '{feat}' is unusual: expected around {recon_val:.2f}, but got {orig_val:.2f}."
+                else:
+                    reason = f"The attribute '{feat}' shows a normal value."
+                explanation.append(reason)
+            log_entry["why"] = explanation
+
+            print(f"Event {df_existing.shape[0]}: score={recon_error:.4f} [ANOMALY]")
+            print("Top contributing features to anomaly score:")
+            for reason in explanation:
+                print(f"  {reason}")
+        else:
+            print(f"Event {df_existing.shape[0]}: score={recon_error:.4f} [normal]")
 
     # --- Append to log ---
     with open(LOG_FILE, 'a') as log_f:
