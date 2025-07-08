@@ -243,7 +243,6 @@ def monitor_anomaly_logs():
 
         message = (
             f"{header}\n"
-            f"*Log Index:* {idx}"
             f"{unknown_text}"
             f"\n*Why:*\n{reason_text}"
         )
