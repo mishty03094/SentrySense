@@ -6,14 +6,9 @@ import json
 from backend.slack_alerts import send_slack_alert
 from fastapi_utils.tasks import repeat_every
 from typing import List
+import os
 
 app = FastAPI()
-
-# Pydantic models
-class AnomalyReport(BaseModel):
-    user: str
-    time: str
-    anomaly_type: str
 
 class ThreatReport(BaseModel):
     threat_type: str
@@ -29,19 +24,62 @@ class ThreatReport(BaseModel):
 # --- ROUTES ---
 
 @app.post("/report/anomaly")
-async def report_anomaly(data: AnomalyReport):
-    with open("simulation_and_detection/logs/sample_logs.json", "w") as f:
-        json.dump(data.dict(), f, indent=2)
+async def report_anomaly(_: dict):
+    log_path = "simulation_and_detection_/logs/stream_logs.jsonl"
+    seen_path = "backend/seen_anomalies.json"
 
-    alert_types = [
-        "high_frequency_action", "impossible_location", "role_action_mismatch",
-        "hard_negative", "feature_swap", "unusual_time", "subtle_time",
-        "subtle_location", "random_label_noise"
-    ]
-    if data.anomaly_type in alert_types:
-        send_slack_alert(f"🚨 Anomaly Detected: {data.anomaly_type} for {data.user} at {data.time}")
+    try:
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+            if not lines:
+                return {"status": "no logs to process"}
+            latest_entry = json.loads(lines[-1])
+    except Exception as e:
+        return {"error": f"Log read error: {e}"}
 
-    return {"status": "anomaly recorded"}
+    stream_index = latest_entry.get("stream_index")
+    anomaly = latest_entry.get("anomaly", "")
+    reason = latest_entry.get("reason", "")
+    raw = latest_entry.get("raw_features", {})
+
+    # Load seen anomaly indexes
+    try:
+        with open(seen_path, "r") as f:
+            seen = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        seen = []
+
+    if stream_index in seen:
+        return {"status": "already alerted"}
+
+    if anomaly in [True, "medium", "high", "low_level"]:
+        unknown_fields = []
+        if raw.get("masked_user", 0) == -1:
+            unknown_fields.append("user")
+        if raw.get("source_ip", 0) == -1:
+            unknown_fields.append("source IP")
+        if raw.get("destination_ip", 0) == -1:
+            unknown_fields.append("destination IP")
+
+        if unknown_fields:
+            reason += f"\n⚠️ Unknown {', '.join(unknown_fields)} involved."
+
+        message = (
+            f"🚨 Anomaly Detected!\n"
+            f"• Stream Index: {stream_index}\n"
+            f"• Type: {anomaly}\n"
+            f"• Reason: {reason.strip()}"
+        )
+        send_slack_alert(message)
+
+        seen.append(stream_index)
+        with open(seen_path, "w") as f:
+            json.dump(seen, f, indent=2)
+
+        return {"status": "new anomaly alerted"}
+
+    return {"status": "no actionable anomaly"}
+
 
 @app.post("/report/threat")
 async def report_threat(data: ThreatReport):
@@ -133,4 +171,87 @@ def monitor_predicted_threats():
     if new_alerts:
         seen.extend(new_alerts)
         with open("backend/seen_threats.json", "w") as f:
+            json.dump(seen, f, indent=2)
+
+@app.on_event("startup")
+@repeat_every(seconds=20)
+def monitor_anomaly_logs():
+    log_path = "simulation_and_detection_/logs/stream_logs.jsonl"
+    seen_path = "backend/seen_anomalies.json"
+
+    # Load seen
+    try:
+        with open(seen_path, "r") as f:
+            seen = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        seen = []
+
+    if not os.path.exists(log_path):
+        return
+
+    with open(log_path, "r") as f:
+        lines = f.readlines()
+
+    new_alerts = []
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+
+        idx = entry.get("stream_index")
+        if idx in seen:
+            continue
+
+        anomaly = entry.get("anomaly")
+        raw = entry.get("raw_features", {})
+
+        if anomaly not in [True, "medium", "low_level"]:
+            continue  # skip noise
+
+        header = ""
+        emoji = ""
+        if anomaly is True:
+            emoji = "⚠️"
+            header = f"{emoji} High Anomaly Detected"
+        elif anomaly == "medium":
+            emoji = "🔍"
+            header = f"{emoji} Medium Time-Based Anomaly"
+        elif anomaly == "low_level":
+            emoji = "ℹ️"
+            header = f"{emoji} Low-Level Anomaly Insight"
+
+        # Check for unknowns
+        unknowns = []
+        if raw.get("masked_user", 0) == -1:
+            unknowns.append("User")
+        if raw.get("source_ip", 0) == -1:
+            unknowns.append("Source IP")
+        if raw.get("destination_ip", 0) == -1:
+            unknowns.append("Destination IP")
+
+        unknown_text = ""
+        if unknowns:
+            unknown_text = f"\n*Detected Unknown Entities:* {', '.join(unknowns)}"
+
+        # Reason text
+        reasons = entry.get("why", [])
+        reason_text = "\n• " + "\n• ".join(reasons) if reasons else ""
+        simple_reason = entry.get("reason", "")
+        if simple_reason and not reason_text:
+            reason_text = f"\n• {simple_reason}"
+
+        message = (
+            f"{header}\n"
+            f"*Log Index:* {idx}"
+            f"{unknown_text}"
+            f"\n*Why:*\n{reason_text}"
+        )
+
+        send_slack_alert(message)
+        new_alerts.append(idx)
+
+    if new_alerts:
+        seen.extend(new_alerts)
+        with open(seen_path, "w") as f:
             json.dump(seen, f, indent=2)

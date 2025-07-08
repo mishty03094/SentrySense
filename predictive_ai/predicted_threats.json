@@ -1,95 +1,123 @@
 [
-    {
-        "threat_type": "FTP Server Root Access Vulnerability",
-        "predicted_time": null,
-        "description": "The identified CVE, CVE-1999-0082, describes a vulnerability in an FTP server where the `CWD ~root` command allows an attacker to change their working directory to the root directory. This allows for potential arbitrary file access and modification, including the ability to execute commands as the root user, granting complete control over the system.  This is particularly dangerous if the FTP server has access to other sensitive system components.",
-        "risk_level": "High",
-        "affected_systems": [
-            "file-server-01"
-        ],
-        "suggested_fixes": [
-            "Immediately disable the FTP service on file-server-01 until a patch or upgrade is applied.  A temporary alternative like SFTP (SSH File Transfer Protocol) should be considered.",
-            "Upgrade the CentOS 7 operating system on file-server-01 to a fully patched and supported version or a more modern alternative which may include an updated FTP daemon.",
-            "If upgrading the OS is not feasible, thoroughly investigate updates and security patches for the specific FTP server software running on file-server-01. Apply these patches immediately.",
-            "Implement and strictly enforce least privilege access controls. The FTP service should run under a dedicated, non-root user account with minimal permissions.",
-            "Consider replacing the FTP server with a more secure alternative like SFTP, which leverages SSH's strong security features.",
-            "Review and update firewall rules to restrict access to the FTP server to only necessary IP addresses or networks. The firewall should block any unauthorized FTP access attempts.",
-            "Regularly audit system logs to detect and respond to suspicious activity, including failed login attempts or unexpected file access.",
-            "Implement robust change management and configuration management processes to ensure that vulnerabilities are quickly identified and mitigated."
-        ],
-        "confidence_score": 0.8,
-        "confidence_reasoning": "The severity is rated High in the original CVE report.  Given that the vulnerability allows for root access via a commonly known command and the infrastructure includes a legacy CentOS 7 system running FTP, this significantly increases exploitability.  Since the affected system, file-server-01, is present in the described infrastructure and is potentially running a vulnerable FTP service, the relevance to the organization is high.  Therefore, a high confidence score is assigned although the age of the CVE might imply it's already addressed in modern systems, and a lack of specifics regarding the FTP server software leaves slight uncertainty. However, the high potential impact outweighs this uncertainty.",
-        "file": "CVE-1999-0082.txt"
-    },
-    {
-        "threat_type": "Local Privilege Escalation (SunOS 4.0.3)",
-        "predicted_time": "",
-        "description": "The CVE-1999-1122 vulnerability is a local privilege escalation flaw affecting SunOS 4.0.3 and earlier versions.  This means a user already having an account on the affected system could exploit a weakness in the system's restore functionality to gain root (administrator) privileges.  This vulnerability is extremely old and targets a very outdated operating system.  Modern systems (like those listed in the infrastructure) are not directly vulnerable, as they are based on significantly newer operating systems and have undergone extensive security updates.  However, the presence of potentially vulnerable legacy systems or applications within the environment *could* represent a risk if such systems interact with the current infrastructure.",
-        "risk_level": "Medium",
-        "affected_systems": [],
-        "suggested_fixes": [
-            "Conduct a thorough inventory of all systems and applications to identify any running SunOS 4.0.3 or earlier.  This includes identifying any virtual machines or containers that may be running such legacy systems.",
-            "If any SunOS 4.0.3 or earlier systems are found, immediately decommission them or replace them with supported and patched alternatives.  Do not attempt to patch these outdated systems; the security risk is too great.",
-            "Implement and maintain a robust vulnerability scanning and patching process for all systems to prevent similar outdated software from affecting your infrastructure in the future.  Regular penetration testing can also help find such vulnerabilities.",
-            "Enforce strong access controls and least privilege principles to limit the impact of a potential compromise, even if a vulnerability like this were to be found in a legacy system outside the main infrastructure."
-        ],
-        "file": "CVE-1999-1122.txt"
-    },
-    {
-        "threat_type": "BSD passwd Buffer Overflow",
-        "predicted_time": null,
-        "description": "CVE-1999-1471 describes a buffer overflow vulnerability in the `passwd` utility present in older BSD-based operating systems (versions 4.3 and earlier).  This vulnerability allows a local attacker with user-level access to exploit a flaw in how the system handles excessively long input strings for the shell or GECOS (user information) fields in the `/etc/passwd` file. By providing unusually long data, the attacker could overwrite adjacent memory areas, potentially leading to arbitrary code execution and granting them root privileges on the affected system.  Modern systems and distributions generally do not use the vulnerable versions of the `passwd` utility, however, legacy systems might still be vulnerable.",
-        "risk_level": "Medium",
-        "affected_systems": [],
-        "suggested_fixes": [
-            "Inventory all systems and identify any running legacy BSD-based operating systems (versions 4.3 or earlier).  This is unlikely in the given infrastructure.",
-            "If any legacy systems are found, they should be immediately upgraded to a modern, supported operating system that uses a secure `passwd` implementation.  Consider a comprehensive system replacement strategy.",
-            "Implement robust input validation and sanitization wherever user-supplied data is processed, a best practice regardless of this specific vulnerability.",
-            "Regularly update and patch all systems to ensure the latest security updates are installed, reducing the risk of this and other vulnerabilities.",
-            "Implement least-privilege access controls to mitigate impact even if a compromise occurs. Root-level access should only be granted to those requiring it."
-        ],
-        "file": "CVE-1999-1471.txt"
-    },
-    {
-  "threat_type": "Dummy RCE Exploit",
-  "predicted_time": "2025-07-08T20:00:00",
-  "description": "Simulated vulnerability to test background monitor.",
-  "risk_level": "High",
-  "affected_systems": ["dummy-server"],
-  "suggested_fixes": ["Patch immediately"],
-  "confidence_score": 0.95,
-  "confidence_reasoning": "Just testing",
-  "file": "CVE-2025-TEST"
-}, 
   {
-  "threat_type": "SSH Remote Code Execution",
-  "predicted_time": "2025-07-08T18:25:00",
-  "description": "CVE-2025-9999 describes a critical vulnerability in OpenSSH that allows unauthenticated remote attackers to execute arbitrary commands as root by exploiting an integer overflow in the key exchange process.",
-  "risk_level": "High",
-  "affected_systems": ["auth-server-01", "bastion-host-02"],
-  "suggested_fixes": [
-    "Immediately upgrade OpenSSH to the latest patched version.",
-    "Restrict SSH access to only trusted IPs using firewall rules.",
-    "Disable root login over SSH in the sshd_config file.",
-    "Implement fail2ban to block brute force attempts."
-  ],
-  "confidence_score": 0.93,
-  "confidence_reasoning": "The CVE is rated Critical by NVD, and active exploits have been observed. The infrastructure includes exposed SSH services, increasing real-world risk.",
-  "file": "CVE-2025-9999.txt"
-}, 
-{
-  "threat_type": "Deprecated TLS Version in Use",
-  "predicted_time": "2025-07-08T17:00:00",
-  "description": "Some backend APIs are still accepting TLS 1.0/1.1 connections, which are considered deprecated and insecure. While not an immediate exploit, it may allow downgrade attacks or weaken encryption guarantees.",
-  "risk_level": "Medium",
-  "affected_systems": ["api-gateway-01"],
-  "suggested_fixes": [
-    "Update API server configurations to only accept TLS 1.2 and above.",
-    "Use SSL Labs to test server TLS configurations and remove legacy cipher suites.",
-    "Ensure all load balancers also enforce minimum TLS standards."
-  ],
-  "confidence_score": 0.74,
-  "confidence_reasoning": "TLS 1.0/1.1 are deprecated as per industry standards. Presence in production is avoidable and adds risk.",
-  "file": "TLS-deprecation-2025.txt"
-}
+    "threat_type": "SSH Remote Code Execution",
+    "predicted_time": null,
+    "description": "CVE-2024-9021 reveals a critical vulnerability in OpenSSH 8.2p1 where malformed authentication packets can trigger a buffer overflow, enabling attackers to remotely execute code on the server. This is particularly dangerous for public-facing systems with root-level access enabled.",
+    "risk_level": "High",
+    "affected_systems": [
+      "auth-server-01",
+      "bastion-host-02"
+    ],
+    "suggested_fixes": [
+      "Patch OpenSSH to version 9.4 or later immediately.",
+      "Disable root login over SSH (`PermitRootLogin no`) in sshd_config.",
+      "Restrict SSH access using IP whitelisting and key-based authentication.",
+      "Monitor SSH logs for unusual connection patterns or brute-force attempts."
+    ],
+    "confidence_score": 0.92,
+    "confidence_reasoning": "The infrastructure audit confirms that OpenSSH 8.2 is deployed on multiple exposed systems. Given the public exploit availability, confidence is high.",
+    "file": "CVE-2024-9021.txt"
+  },
+  {
+    "threat_type": "FTP Server Root Access Vulnerability",
+    "predicted_time": null,
+    "description": "The identified CVE, CVE-1999-0082, describes a vulnerability in an FTP server where the `CWD ~root` command allows an attacker to change their working directory to the root directory. This allows for potential arbitrary file access and modification, including the ability to execute commands as the root user, granting complete control over the system.  This is particularly dangerous if the FTP server has access to other sensitive system components.",
+    "risk_level": "High",
+    "affected_systems": [
+      "file-server-01"
+    ],
+    "suggested_fixes": [
+      "Immediately disable the FTP service on file-server-01 until a patch or upgrade is applied.  A temporary alternative like SFTP (SSH File Transfer Protocol) should be considered.",
+      "Upgrade the CentOS 7 operating system on file-server-01 to a fully patched and supported version or a more modern alternative which may include an updated FTP daemon.",
+      "If upgrading the OS is not feasible, thoroughly investigate updates and security patches for the specific FTP server software running on file-server-01. Apply these patches immediately.",
+      "Implement and strictly enforce least privilege access controls. The FTP service should run under a dedicated, non-root user account with minimal permissions.",
+      "Consider replacing the FTP server with a more secure alternative like SFTP, which leverages SSH's strong security features.",
+      "Review and update firewall rules to restrict access to the FTP server to only necessary IP addresses or networks. The firewall should block any unauthorized FTP access attempts.",
+      "Regularly audit system logs to detect and respond to suspicious activity, including failed login attempts or unexpected file access.",
+      "Implement robust change management and configuration management processes to ensure that vulnerabilities are quickly identified and mitigated."
+    ],
+    "confidence_score": 0.8,
+    "confidence_reasoning": "The severity is rated High in the original CVE report.  Given that the vulnerability allows for root access via a commonly known command and the infrastructure includes a legacy CentOS 7 system running FTP, this significantly increases exploitability.  Since the affected system, file-server-01, is present in the described infrastructure and is potentially running a vulnerable FTP service, the relevance to the organization is high.  Therefore, a high confidence score is assigned although the age of the CVE might imply it's already addressed in modern systems, and a lack of specifics regarding the FTP server software leaves slight uncertainty. However, the high potential impact outweighs this uncertainty.",
+    "file": "CVE-1999-0082.txt"
+  },
+  {
+    "threat_type": "Local Privilege Escalation (SunOS 4.0.3)",
+    "predicted_time": "",
+    "description": "The CVE-1999-1122 vulnerability is a local privilege escalation flaw affecting SunOS 4.0.3 and earlier versions.  This means a user already having an account on the affected system could exploit a weakness in the system's restore functionality to gain root (administrator) privileges.  This vulnerability is extremely old and targets a very outdated operating system.  Modern systems (like those listed in the infrastructure) are not directly vulnerable, as they are based on significantly newer operating systems and have undergone extensive security updates.  However, the presence of potentially vulnerable legacy systems or applications within the environment *could* represent a risk if such systems interact with the current infrastructure.",
+    "risk_level": "Medium",
+    "affected_systems": [],
+    "suggested_fixes": [
+      "Conduct a thorough inventory of all systems and applications to identify any running SunOS 4.0.3 or earlier.  This includes identifying any virtual machines or containers that may be running such legacy systems.",
+      "If any SunOS 4.0.3 or earlier systems are found, immediately decommission them or replace them with supported and patched alternatives.  Do not attempt to patch these outdated systems; the security risk is too great.",
+      "Implement and maintain a robust vulnerability scanning and patching process for all systems to prevent similar outdated software from affecting your infrastructure in the future.  Regular penetration testing can also help find such vulnerabilities.",
+      "Enforce strong access controls and least privilege principles to limit the impact of a potential compromise, even if a vulnerability like this were to be found in a legacy system outside the main infrastructure."
+    ],
+    "file": "CVE-1999-1122.txt"
+  },
+  {
+    "threat_type": "BSD passwd Buffer Overflow",
+    "predicted_time": null,
+    "description": "CVE-1999-1471 describes a buffer overflow vulnerability in the `passwd` utility present in older BSD-based operating systems (versions 4.3 and earlier).  This vulnerability allows a local attacker with user-level access to exploit a flaw in how the system handles excessively long input strings for the shell or GECOS (user information) fields in the `/etc/passwd` file. By providing unusually long data, the attacker could overwrite adjacent memory areas, potentially leading to arbitrary code execution and granting them root privileges on the affected system.  Modern systems and distributions generally do not use the vulnerable versions of the `passwd` utility, however, legacy systems might still be vulnerable.",
+    "risk_level": "Medium",
+    "affected_systems": [],
+    "suggested_fixes": [
+      "Inventory all systems and identify any running legacy BSD-based operating systems (versions 4.3 or earlier).  This is unlikely in the given infrastructure.",
+      "If any legacy systems are found, they should be immediately upgraded to a modern, supported operating system that uses a secure `passwd` implementation.  Consider a comprehensive system replacement strategy.",
+      "Implement robust input validation and sanitization wherever user-supplied data is processed, a best practice regardless of this specific vulnerability.",
+      "Regularly update and patch all systems to ensure the latest security updates are installed, reducing the risk of this and other vulnerabilities.",
+      "Implement least-privilege access controls to mitigate impact even if a compromise occurs. Root-level access should only be granted to those requiring it."
+    ],
+    "file": "CVE-1999-1471.txt"
+  },
+  {
+    "threat_type": "Dummy RCE Exploit",
+    "predicted_time": "2025-07-08T20:00:00",
+    "description": "Simulated vulnerability to test background monitor.",
+    "risk_level": "High",
+    "affected_systems": [
+      "dummy-server"
+    ],
+    "suggested_fixes": [
+      "Patch immediately"
+    ],
+    "confidence_score": 0.95,
+    "confidence_reasoning": "Just testing",
+    "file": "CVE-2025-TEST"
+  },
+  {
+    "threat_type": "SSH Remote Code Execution",
+    "predicted_time": "2025-07-08T18:25:00",
+    "description": "CVE-2025-9999 describes a critical vulnerability in OpenSSH that allows unauthenticated remote attackers to execute arbitrary commands as root by exploiting an integer overflow in the key exchange process.",
+    "risk_level": "High",
+    "affected_systems": [
+      "auth-server-01",
+      "bastion-host-02"
+    ],
+    "suggested_fixes": [
+      "Immediately upgrade OpenSSH to the latest patched version.",
+      "Restrict SSH access to only trusted IPs using firewall rules.",
+      "Disable root login over SSH in the sshd_config file.",
+      "Implement fail2ban to block brute force attempts."
+    ],
+    "confidence_score": 0.93,
+    "confidence_reasoning": "The CVE is rated Critical by NVD, and active exploits have been observed. The infrastructure includes exposed SSH services, increasing real-world risk.",
+    "file": "CVE-2025-9999.txt"
+  },
+  {
+    "threat_type": "Deprecated TLS Version in Use",
+    "predicted_time": "2025-07-08T17:00:00",
+    "description": "Some backend APIs are still accepting TLS 1.0/1.1 connections, which are considered deprecated and insecure. While not an immediate exploit, it may allow downgrade attacks or weaken encryption guarantees.",
+    "risk_level": "Medium",
+    "affected_systems": [
+      "api-gateway-01"
+    ],
+    "suggested_fixes": [
+      "Update API server configurations to only accept TLS 1.2 and above.",
+      "Use SSL Labs to test server TLS configurations and remove legacy cipher suites.",
+      "Ensure all load balancers also enforce minimum TLS standards."
+    ],
+    "confidence_score": 0.74,
+    "confidence_reasoning": "TLS 1.0/1.1 are deprecated as per industry standards. Presence in production is avoidable and adds risk.",
+    "file": "TLS-deprecation-2025.txt"
+  }
 ]
