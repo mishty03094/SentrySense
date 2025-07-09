@@ -7,6 +7,7 @@ from torch_geometric.nn import GCNConv
 import numpy as np
 from datetime import datetime
 import pytz
+import random
 
 # Paths
 GRAPH_PATH = 'splits/train_graph_0.pt'
@@ -116,7 +117,7 @@ def main():
     node_features = torch.tensor(row.values, dtype=torch.float)
 
     log_entry = {
-        "stream_index": int(df_existing.shape[0]),
+        "stream_index": random.randint(3000, 4000),
         "raw_features": row.to_dict()
     }
 
